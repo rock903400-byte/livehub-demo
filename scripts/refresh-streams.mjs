@@ -160,6 +160,21 @@ async function verifyOwner(ref, expectedHost) {
   };
 }
 
+/**
+ * 確認這支影片此刻真的在直播中。
+ *
+ * 光驗歸屬不夠：頻道沒在直播時 /live 會導向該頻道最近的一支普通影片，
+ * 那支影片的擁有者當然是對的，卻不是直播 —— 驗歸屬會放行，牆上就會出現
+ * 一段錄影。API 路徑由 eventType=live 保證，這裡是網頁解析路徑的對應檢查。
+ */
+async function isLiveNow(ref) {
+  const res = await fetch('https://www.youtube.com/watch?v=' + ref, {
+    headers: { 'user-agent': UA, 'accept-language': 'en-US,en;q=0.9' }
+  });
+  if (!res.ok) throw new Error('watch HTTP ' + res.status);
+  return /"isLiveNow"\s*:\s*true/.test(await res.text());
+}
+
 /* =========================================================
    主流程
    ========================================================= */
@@ -237,9 +252,14 @@ async function main() {
                             ' 但該影片屬於「' + owner.author + '」，不是「' + src.host + '」，捨棄');
               ref = null;
               rejected++;
+            } else if (!await isLiveNow(ref)) {
+              console.error('  ! ' + src.handle + ' 解析到 ' + ref +
+                            ' 但該影片目前不是直播中（可能是頻道沒開播時導向的普通影片），捨棄');
+              ref = null;
+              rejected++;
             }
           } catch (e) {
-            console.error('  ! ' + src.handle + ' 無法驗證歸屬（' + e.message + '），捨棄');
+            console.error('  ! ' + src.handle + ' 無法驗證（' + e.message + '），捨棄');
             ref = null;
             rejected++;
           }
