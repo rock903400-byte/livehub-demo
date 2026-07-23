@@ -1,0 +1,78 @@
+{
+  "updatedAt": "2026-07-23T08:04:29.990Z",
+  "note": "由 scripts/refresh-streams.mjs 自動產生，請勿手改。頻道清單在該腳本的 SOURCES。",
+  "streams": [
+    {
+      "handle": "SkyNews",
+      "ref": "Ac2UMkBqnAI",
+      "host": "Sky News",
+      "title": "24 小時英國與國際即時新聞",
+      "tag": "新聞",
+      "stale": false
+    },
+    {
+      "handle": "AlJazeeraEnglish",
+      "ref": "gCNeDWCI0vo",
+      "host": "Al Jazeera English",
+      "title": "中東與全球局勢英文直播",
+      "tag": "新聞",
+      "stale": false
+    },
+    {
+      "handle": "DWNews",
+      "ref": "LuKwFajn37U",
+      "host": "DW News",
+      "title": "德國之聲 24 小時英文新聞",
+      "tag": "新聞",
+      "stale": false
+    },
+    {
+      "handle": "euronews",
+      "ref": "pykpO5kQJ98",
+      "host": "euronews",
+      "title": "歐洲即時新聞連線",
+      "tag": "新聞",
+      "stale": false
+    },
+    {
+      "handle": "NBCNews",
+      "ref": "iFzZXUeewbQ",
+      "host": "NBC News",
+      "title": "美國每日焦點新聞直播",
+      "tag": "新聞",
+      "stale": false
+    },
+    {
+      "handle": "ABCNews",
+      "ref": "iipR5yUp36o",
+      "host": "ABC News",
+      "title": "突發新聞與現場連線",
+      "tag": "新聞",
+      "stale": false
+    },
+    {
+      "handle": "trtworld",
+      "ref": "b8lPrtjmnmw",
+      "host": "TRT World",
+      "title": "國際視角的深度新聞",
+      "tag": "新聞",
+      "stale": false
+    },
+    {
+      "handle": "NASA",
+      "ref": "awQzjn72bI0",
+      "host": "NASA",
+      "title": "太空任務與地球實況畫面",
+      "tag": "知識",
+      "stale": false
+    },
+    {
+      "handle": "LofiGirl",
+      "ref": "VAlMDl00mYY",
+      "host": "Lofi Girl",
+      "title": "放鬆用 lofi 電台，讀書工作都適合",
+      "tag": "音樂",
+      "stale": false
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+name: 更新直播來源清單
+
+# 直播影片 ID 每換一場就會變，寫死在頁面裡的清單會逐漸失效。
+# 這個排程定期重新解析各頻道目前的直播，把結果寫進 streams.json。
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 每 6 小時。GitHub 排程在尖峰時可能延後數十分鐘，屬正常。
+  workflow_dispatch:         # 也可以在 Actions 頁面手動觸發
+
+# 同時只跑一個，避免兩次排程互相踩到
+concurrency:
+  group: refresh-streams
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 解析各頻道目前的直播 ID
+        run: node scripts/refresh-streams.mjs
+
+      - name: 有變動才 commit
+        run: |
+          if git diff --quiet -- streams.json; then
+            echo "streams.json 沒有變動，不建立 commit。"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add streams.json
+          git commit -m "chore: 更新直播來源清單"
+          git push

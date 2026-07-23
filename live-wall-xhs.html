@@ -696,12 +696,15 @@
   // 共用鍵名會互相蓋掉設定。
   var LS_STREAMS = 'liveWallXhs.streams';
   var LS_FILTER  = 'liveWallXhs.filter';
+  var LS_TOUCHED = 'liveWallXhs.touched';   // 使用者自己動過清單就不再被遠端覆蓋
   var YT_ORIGIN  = 'https://www.youtube.com';
+  var STREAMS_URL = 'streams.json';         // 由 scripts/refresh-streams.mjs 定期更新
 
   var TAGS = ['推薦', '新聞', '知識', '音樂'];
 
-  // 2026-07-23 逐一確認過可嵌入播放。
-  // 直播影片 ID 會隨每一場直播改變，失效時用該台的 youtube.com/@帳號/live 取得新網址。
+  // 離線退路清單。正常情況下會被 streams.json 的內容取代（見 hydrateFromRemote），
+  // 這裡留著是為了 file:// 開啟、沒有網路、或抓不到 streams.json 時仍有東西可播。
+  // 直播影片 ID 會隨每一場直播改變，所以這份寫死的清單本來就會逐漸過期。
   var DEFAULT_STREAMS = [
     { kind: 'video', ref: 'YDvsBbKfLPA', title: '24 小時英國與國際即時新聞', host: 'Sky News',           tag: '新聞' },
     { kind: 'video', ref: 'gCNeDWCI0vo', title: '中東與全球局勢英文直播',     host: 'Al Jazeera English', tag: '新聞' },
@@ -782,6 +785,16 @@
       })));
       localStorage.setItem(LS_FILTER, filter);
     } catch (e) { /* 無痕模式等情況，忽略 */ }
+  }
+
+  // 標記「使用者自己整理過清單」。只在新增／移除時呼叫 ——
+  // 切換分類或搜尋不算，那種使用者仍應該收到自動更新的預設清單。
+  function touch() {
+    try { localStorage.setItem(LS_TOUCHED, '1'); } catch (e) { /* 同 save() */ }
+  }
+
+  function isTouched() {
+    try { return localStorage.getItem(LS_TOUCHED) === '1'; } catch (e) { return false; }
   }
 
   function load() {
@@ -1264,7 +1277,7 @@
       added++;
     });
 
-    if (added) { save(); render(); renderList(); }
+    if (added) { touch(); save(); render(); renderList(); }
 
     if (added && !errors.length) toast('已新增 ' + added + ' 路直播。');
     else if (added && errors.length) toast('已新增 ' + added + ' 路；' + errors.length + ' 筆失敗 — ' + errors[0], true);
@@ -1281,10 +1294,58 @@
     if (audioId === id) audioId = null;
     delete frames[id];
     delete visible[id];
+    touch();
     save();
     render();
     renderList();
     toast('已移除「' + t + '」。');
+  }
+
+  /* =========================================================
+     自動更新預設清單
+     ========================================================= */
+
+  // streams.json 由 GitHub Actions 定期重新解析各頻道目前的直播 ID 後產生。
+  // 這裡在首次繪製「之後」才非同步套用，所以第一畫面不會被網路拖慢；
+  // 抓不到就維持原本畫面，不打擾使用者。
+  function hydrateFromRemote() {
+    if (location.protocol === 'file:') return;   // file:// 本來就不能播，也 fetch 不到
+    if (isTouched()) return;                     // 使用者自己排過的清單，不去動它
+    if (typeof fetch !== 'function') return;
+
+    fetch(STREAMS_URL, { cache: 'no-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !Array.isArray(data.streams)) return;
+
+        var fresh = data.streams.filter(function (s) {
+          return s && typeof s.ref === 'string' && VIDEO_ID.test(s.ref);
+        });
+        if (!fresh.length) return;
+
+        // ID 序列一樣就不重繪，免得 iframe 白白重載閃一下
+        var before = streams.map(function (s) { return s.ref; }).join(',');
+        var after  = fresh.map(function (s) { return s.ref; }).join(',');
+        if (before === after) return;
+
+        streams = fresh.map(function (s) {
+          return {
+            id: uid(),
+            kind: 'video',
+            ref: s.ref,
+            title: s.title || s.host || s.ref,
+            host: s.host || s.title || s.ref,
+            tag: TAGS.indexOf(s.tag) > 0 ? s.tag : '其他'
+          };
+        });
+        audioId = null;
+        frames = {};
+        visible = {};
+        save();
+        render();
+        renderList();
+      })
+      .catch(function () { /* 沒網路或檔案不存在都不影響使用，靜默略過 */ });
   }
 
   /* =========================================================
@@ -1434,6 +1495,7 @@
   load();
   renderTabs();
   render();
+  hydrateFromRemote();
 })();
 </script>
 </body>
