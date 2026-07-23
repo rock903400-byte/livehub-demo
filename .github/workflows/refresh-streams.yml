@@ -2,10 +2,20 @@ name: 更新直播來源清單
 
 # 直播影片 ID 每換一場就會變，寫死在頁面裡的清單會逐漸失效。
 # 這個排程定期重新解析各頻道目前的直播，把結果寫進 streams.json。
+#
+# 排程目前停用中。原因：從 GitHub Actions 的資料中心 IP 請求 YouTube 的 /live
+# 頁面時，回來的頁面結構與一般網路不同，canonical 會指向推薦區塊裡不相干的影片
+# —— 實測 9 路有 8 路解析錯誤，NBC News 與 TRT World 甚至同時被解析成 Jon
+# Stewart 的節目。腳本現已加上歸屬驗證會擋掉這類結果，但擋掉之後 CI 上就等於
+# 永遠解析不出新 ID，排程沒有意義。
+#
+# 目前的用法是在一般網路環境手動執行 `node scripts/refresh-streams.mjs`。
+# 若要恢復全自動，需改接 YouTube Data API（需要 API 金鑰）。
+#
 on:
-  schedule:
-    - cron: '0 */6 * * *'   # 每 6 小時。GitHub 排程在尖峰時可能延後數十分鐘，屬正常。
-  workflow_dispatch:         # 也可以在 Actions 頁面手動觸發
+  # schedule:
+  #   - cron: '0 */6 * * *'
+  workflow_dispatch:         # 只保留手動觸發
 
 # 同時只跑一個，避免兩次排程互相踩到
 concurrency:

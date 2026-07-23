@@ -63,6 +63,28 @@ async function resolve(handle) {
   return extractVideoId(await res.text());
 }
 
+/**
+ * 確認這支影片真的屬於預期的頻道。
+ *
+ * 必要，不是保險：從資料中心 IP（例如 GitHub Actions runner）請求 /live 時，
+ * YouTube 會回傳結構不同的頁面，canonical 可能指向推薦區塊裡某支毫不相干的影片。
+ * 實測曾經把 NBC News 與 TRT World 同時解析成 Jon Stewart 的節目、
+ * 把 Lofi Girl 解析成另一個頻道的音樂影片。
+ *
+ * oEmbed 的 author_name 是頻道名，拿來跟 SOURCES 的 host 比對即可擋掉這類結果。
+ */
+async function verifyOwner(ref, expectedHost) {
+  const api = 'https://www.youtube.com/oembed?url=' +
+              encodeURIComponent('https://www.youtube.com/watch?v=' + ref) + '&format=json';
+  const res = await fetch(api, { headers: { 'user-agent': UA } });
+  if (!res.ok) throw new Error('oEmbed HTTP ' + res.status);
+  const author = String((await res.json()).author_name || '').trim();
+  return {
+    ok: author.toLowerCase() === String(expectedHost).trim().toLowerCase(),
+    author: author
+  };
+}
+
 /** 讀既有的 streams.json，供解析失敗時沿用舊 ID。讀不到就當空的。 */
 async function readPrevious() {
   try {
@@ -80,7 +102,8 @@ async function readPrevious() {
 async function main() {
   const previous = await readPrevious();
   const streams = [];
-  let resolved = 0, kept = 0, changed = 0;
+  const claimed = new Map();   // ref -> handle，用來擋掉多個頻道解析到同一支影片
+  let resolved = 0, kept = 0, changed = 0, rejected = 0;
 
   for (const src of SOURCES) {
     let ref = null;
@@ -88,6 +111,30 @@ async function main() {
       ref = await resolve(src.handle);
     } catch (e) {
       console.error('  ! ' + src.handle + ' 請求失敗：' + e.message);
+    }
+
+    // 解析到了就必須通過歸屬驗證，否則視同沒解析到
+    if (ref) {
+      if (claimed.has(ref)) {
+        console.error('  ! ' + src.handle + ' 解析結果 ' + ref +
+                      ' 與 ' + claimed.get(ref) + ' 重複，判定為誤判，捨棄');
+        ref = null;
+        rejected++;
+      } else {
+        try {
+          const owner = await verifyOwner(ref, src.host);
+          if (!owner.ok) {
+            console.error('  ! ' + src.handle + ' 解析到 ' + ref +
+                          ' 但該影片屬於「' + owner.author + '」，不是「' + src.host + '」，捨棄');
+            ref = null;
+            rejected++;
+          }
+        } catch (e) {
+          console.error('  ! ' + src.handle + ' 無法驗證歸屬（' + e.message + '），捨棄');
+          ref = null;
+          rejected++;
+        }
+      }
     }
 
     const old = previous.get(src.handle) || null;
@@ -114,6 +161,8 @@ async function main() {
       continue;
     }
 
+    claimed.set(ref, src.handle);
+
     streams.push({
       handle: src.handle,
       ref: ref,
@@ -139,7 +188,16 @@ async function main() {
     unchanged = JSON.stringify(parsed.streams) === signature;
   } catch { /* 檔案不存在或壞掉，就當作有變動 */ }
 
-  console.log('解析成功 ' + resolved + ' 路，沿用舊值 ' + kept + ' 路，ID 有變動 ' + changed + ' 路。');
+  console.log('解析成功 ' + resolved + ' 路，驗證不通過 ' + rejected +
+              ' 路，沿用舊值 ' + kept + ' 路，ID 有變動 ' + changed + ' 路。');
+
+  // 幾乎全被擋下來，通常代表 YouTube 對這個來源 IP 回了不同的頁面結構
+  // （資料中心 IP 常見），而不是九個頻道剛好同時出問題。
+  if (rejected >= SOURCES.length - 1) {
+    console.error('警告：' + rejected + '/' + SOURCES.length +
+                  ' 路驗證失敗，本次解析結果整體不可信，維持既有 streams.json 不變。');
+    return;
+  }
 
   if (unchanged) {
     console.log('內容與現有 streams.json 相同，不寫檔。');
