@@ -1,0 +1,21 @@
+# 影音與大型檔案 —— 這個倉庫只放網頁原型，不要放錄影或素材
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.zip
+
+# 資料與試算表
+*.xlsx
+*.xls
+*.csv
+
+# 作業系統
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 編輯器
+.vscode/
+.idea/
+*.swp

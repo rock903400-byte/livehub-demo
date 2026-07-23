@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多路直播展示 · LiveHub</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    background: #f6f6f7;
+    color: #23252b;
+    font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei",
+                 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { width: min(880px, 100%); }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -.4px; }
+  .lead { color: #61646c; margin: 0 0 28px; font-size: 15px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  a.card {
+    display: block;
+    background: #fff;
+    border: 1px solid #ececef;
+    border-radius: 14px;
+    padding: 22px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 2px 10px rgba(20,22,28,.05);
+    transition: transform .18s, box-shadow .18s, border-color .18s;
+  }
+  a.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 26px rgba(20,22,28,.12);
+    border-color: #ff2442;
+  }
+  .tagline {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: #fff1f3;
+    color: #ff2442;
+    margin-bottom: 10px;
+  }
+  .tagline.dark { background: #eef0f4; color: #61646c; }
+  a.card h2 { margin: 0 0 6px; font-size: 18px; }
+  a.card p { margin: 0; color: #61646c; font-size: 14px; }
+  footer {
+    margin-top: 26px;
+    font-size: 13px;
+    color: #9a9ea6;
+    border-top: 1px solid #ececef;
+    padding-top: 16px;
+  }
+  footer strong { color: #61646c; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>多路直播展示</h1>
+    <p class="lead">同一套功能，兩種版面。皆為提案展示用的原型，直播來源為 YouTube 官方嵌入。</p>
+
+    <div class="grid">
+      <a class="card" href="live-wall-xhs.html">
+        <span class="tagline">小紅書風格</span>
+        <h2>直播廣場</h2>
+        <p>淺色卡片瀑布流、分類分頁與搜尋，點卡片展開大畫面。適合展示消費端的瀏覽體驗。</p>
+      </a>
+
+      <a class="card" href="live-wall.html">
+        <span class="tagline dark">監看牆</span>
+        <h2>多路直播牆</h2>
+        <p>深色格狀版面，2×2 / 3×3 / 4×4 切換，單格放大與音訊獨佔。適合展示同時盯多路的情境。</p>
+      </a>
+    </div>
+
+    <footer>
+      <strong>說明：</strong>頁面上的觀看數與讚數為示意數字，非真實數據。品牌名稱為中性佔位，非任何實際企業。
+      小紅書與抖音的直播無法嵌入第三方網頁，此處內容來源均為 YouTube。
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>直播廣場 LiveHub</title>
+<style>
+  :root {
+    --red: #ff2442;
+    --red-soft: #fff1f3;
+    --bg: #f6f6f7;
+    --card: #ffffff;
+    --text: #23252b;
+    --text-2: #61646c;
+    --text-3: #9a9ea6;
+    --line: #ececef;
+    --radius: 14px;
+    --shadow: 0 2px 10px rgba(20, 22, 28, .06);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei",
+                 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body { min-height: 100vh; display: flex; flex-direction: column; }
+
+  button { font: inherit; cursor: pointer; }
+
+  /* =========== 頂部列 =========== */
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(255, 255, 255, .94);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .topbar {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 11px 18px 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -.3px;
+    white-space: nowrap;
+  }
+
+  .brand-mark {
+    width: 28px; height: 28px;
+    border-radius: 9px;
+    background: var(--red);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .brand small {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-3);
+    letter-spacing: .4px;
+  }
+
+  .search {
+    flex: 1 1 260px;
+    max-width: 460px;
+    position: relative;
+  }
+  .search input {
+    width: 100%;
+    border: 0;
+    background: #f1f1f3;
+    border-radius: 999px;
+    padding: 9px 16px 9px 38px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--text);
+    outline: 2px solid transparent;
+    transition: outline-color .15s, background .15s;
+  }
+  .search input:focus { background: #fff; outline-color: var(--red); }
+  .search input::placeholder { color: var(--text-3); }
+  .search .ico {
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-3);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  .spacer { flex: 1 1 auto; }
+
+  .tabs {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 18px;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    border: 0;
+    background: transparent;
+    padding: 11px 14px 12px;
+    font-size: 15px;
+    color: var(--text-2);
+    position: relative;
+    white-space: nowrap;
+    transition: color .15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.on { color: var(--text); font-weight: 700; }
+  .tab.on::after {
+    content: "";
+    position: absolute;
+    left: 50%; bottom: 6px;
+    transform: translateX(-50%);
+    width: 20px; height: 3px;
+    border-radius: 2px;
+    background: var(--red);
+  }
+
+  /* =========== 廣場 =========== */
+
+  main {
+    flex: 1;
+    max-width: 1440px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 16px 18px 90px;
+  }
+
+  #plaza {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform .18s, box-shadow .18s;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(20, 22, 28, .12);
+  }
+
+  /* 影像區：直式卡片，把 16:9 的嵌入放大後裁切左右來填滿 */
+  .card-media {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background: #111;
+  }
+
+  .card-media iframe {
+    position: absolute;
+    top: 50%; left: 50%;
+    height: 100%;
+    /* 以高為準補足 16:9 需要的寬度：(16/9) ÷ (3/4) = 2.370 倍卡片寬 */
+    width: 237.04%;
+    transform: translate(-50%, -50%);
+    border: 0;
+    pointer-events: none;   /* 點擊交給卡片，不讓 YouTube 自己的 UI 吃掉 */
+  }
+
+  .live-tag {
+    position: absolute;
+    top: 8px; left: 8px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--red);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    padding: 4px 8px;
+    border-radius: 999px;
+  }
+  .live-tag .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0%   { opacity: 1;   transform: scale(1); }
+    50%  { opacity: .35; transform: scale(.75); }
+    100% { opacity: 1;   transform: scale(1); }
+  }
+
+  .mute-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    z-index: 3;
+    border: 0;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, .45);
+    color: #fff;
+    font-size: 13px;
+    display: grid;
+    place-items: center;
+    backdrop-filter: blur(4px);
+    transition: background .15s;
+  }
+  .mute-btn:hover { background: rgba(0, 0, 0, .7); }
+  .mute-btn.on { background: var(--red); }
+
+  .media-grad {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    z-index: 2;
+    padding: 22px 10px 8px;
+    background: linear-gradient(0deg, rgba(0, 0, 0, .62), transparent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .viewers {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+  }
+
+  .card-body { padding: 9px 11px 11px; }
+
+  .card-title {
+    margin: 0 0 8px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .avatar {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff8aa0, var(--red));
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .host {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .likes { white-space: nowrap; }
+
+  /* 播放失敗覆蓋層 */
+  .card-error {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px;
+    text-align: center;
+    background: #2b2d33;
+    color: #fff;
+  }
+  .card.has-error .card-error { display: flex; }
+  .card-error-msg { font-size: 12px; font-weight: 600; line-height: 1.45; }
+  .card-error-hint { font-size: 11px; color: #a8acb5; line-height: 1.45; }
+
+  #empty {
+    text-align: center;
+    color: var(--text-3);
+    padding: 60px 20px;
+    font-size: 14px;
+    display: none;
+  }
+  #empty.show { display: block; }
+
+  /* =========== 大畫面 =========== */
+
+  #detail {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(16, 17, 20, .88);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #detail.open { display: flex; }
+
+  .detail-box {
+    width: min(980px, 100%);
+    /* 視窗矮的時候要讓「播放器 + 下方資訊列」整個塞得進去，否則關閉鈕會被切掉。
+       扣掉 #detail 的上下 padding 與資訊列高度後，用 16:9 回推可用寬度。 */
+    max-width: calc((100vh - 110px) * 16 / 9);
+    max-width: calc((100dvh - 110px) * 16 / 9);
+    background: #16171a;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+  }
+
+  .detail-player {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #000;
+  }
+  .detail-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+  .detail-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    color: #fff;
+  }
+  .detail-bar .avatar { width: 32px; height: 32px; font-size: 13px; }
+  .detail-info { flex: 1; min-width: 0; }
+  .detail-info h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .detail-info p { margin: 2px 0 0; font-size: 12px; color: #a8acb5; }
+
+  .detail-bar a, .detail-bar button {
+    border: 1px solid rgba(255, 255, 255, .2);
+    background: transparent;
+    color: #fff;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 13px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .detail-bar a:hover, .detail-bar button:hover { background: rgba(255, 255, 255, .12); }
+
+  /* =========== 浮動鈕與底部面板 =========== */
+
+  #fab {
+    position: fixed;
+    right: 22px; bottom: 22px;
+    z-index: 60;
+    width: 52px; height: 52px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--red);
+    color: #fff;
+    font-size: 26px;
+    line-height: 1;
+    box-shadow: 0 6px 18px rgba(255, 36, 66, .42);
+    transition: transform .15s;
+  }
+  #fab:hover { transform: scale(1.06); }
+
+  #sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    background: rgba(0, 0, 0, .4);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  #sheet.open { display: flex; }
+
+  .sheet-box {
+    background: #fff;
+    width: min(680px, 100%);
+    max-height: 88vh;
+    overflow-y: auto;
+    border-radius: 18px 18px 0 0;
+    padding: 18px 20px 24px;
+  }
+
+  .sheet-box h3 { margin: 0 0 3px; font-size: 17px; }
+  .sheet-box .sub { margin: 0 0 14px; font-size: 13px; color: var(--text-3); }
+  .sheet-box h4 { margin: 20px 0 8px; font-size: 14px; }
+
+  .sheet-box input[type="text"], .sheet-box textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    background: #fafafb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .sheet-box input:focus, .sheet-box textarea:focus { border-color: var(--red); background: #fff; }
+  .sheet-box textarea {
+    height: 150px;
+    resize: vertical;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .row { display: flex; gap: 8px; }
+
+  .btn {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    white-space: nowrap;
+    transition: background .15s, border-color .15s;
+  }
+  .btn:hover { background: #f4f4f6; }
+  .btn.primary { background: var(--red); border-color: var(--red); color: #fff; font-weight: 600; }
+  .btn.primary:hover { background: #e51e3a; border-color: #e51e3a; }
+
+  .stream-list { list-style: none; margin: 0; padding: 0; }
+  .stream-list li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .stream-list .s-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stream-list .s-tag {
+    font-size: 11px;
+    color: var(--red);
+    background: var(--red-soft);
+    padding: 2px 8px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .stream-list .s-del {
+    border: 0;
+    background: transparent;
+    color: var(--text-3);
+    font-size: 15px;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+  .stream-list .s-del:hover { color: var(--red); background: var(--red-soft); }
+
+  /* =========== 說明 =========== */
+
+  footer {
+    max-width: 1440px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 0 18px 40px;
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  footer details {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 13px 17px;
+  }
+  footer summary { cursor: pointer; font-weight: 700; color: var(--text); font-size: 14px; }
+  footer ol { margin: 12px 0 3px; padding-left: 20px; }
+  footer li { margin-bottom: 9px; line-height: 1.6; }
+  footer code {
+    background: #f1f1f3;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: ui-monospace, Consolas, monospace;
+  }
+
+  /* =========== 提示 =========== */
+
+  #toast {
+    position: fixed;
+    left: 50%; bottom: 92px;
+    transform: translateX(-50%) translateY(16px);
+    background: #23252b;
+    color: #fff;
+    padding: 11px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .3);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    z-index: 200;
+    max-width: min(560px, 90vw);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.err { background: var(--red); }
+
+  /* file:// 開啟時的警告條（由 JS 依 location.protocol 顯示） */
+  #fileWarn {
+    display: none;
+    background: #2b2d33;
+    color: #fff;
+    padding: 14px 20px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  #fileWarn.show { display: block; }
+  #fileWarn strong { color: #ffd166; }
+  #fileWarn code {
+    background: rgba(255, 255, 255, .14);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 12px;
+  }
+
+  @media (max-width: 560px) {
+    #plaza { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .topbar { padding: 10px 12px 0; gap: 10px; }
+    .tabs { padding: 0 12px; }
+    main { padding: 12px 12px 90px; }
+    footer { padding: 0 12px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="fileWarn">
+  <strong>⚠ 這個頁面是用 file:// 直接開啟的，YouTube 會拒絕播放（錯誤碼 153）。</strong>
+  YouTube 的嵌入播放器要求頁面必須從 <code>http://</code> 或 <code>https://</code> 提供，
+  <code>file://</code> 不會送出 Referer 所以一律被擋。
+  <br>解法：關掉這頁，改用同資料夾裡的 <code>啟動直播廣場.cmd</code> 開啟（會自動起一個本機伺服器）。
+</div>
+
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-mark">直</span>
+      直播廣場
+      <small>LiveHub</small>
+    </div>
+    <div class="search">
+      <span class="ico">🔍</span>
+      <input type="text" id="q" autocomplete="off" placeholder="搜尋直播標題或主播">
+    </div>
+    <div class="spacer"></div>
+  </div>
+  <nav class="tabs" id="tabs"></nav>
+</header>
+
+<main>
+  <div id="plaza"></div>
+  <p id="empty">找不到符合的直播。換個關鍵字，或切到「推薦」看全部。</p>
+</main>
+
+<footer>
+  <details>
+    <summary>使用說明與已知限制（提案前請先看過）</summary>
+    <ol>
+      <li><strong>不能用滑鼠雙擊 HTML 檔開啟。</strong><code>file://</code> 不會送出 Referer，
+          YouTube 的嵌入播放器會一律回錯誤碼 153 拒絕播放。請用同資料夾裡的
+          <code>啟動直播廣場.cmd</code> 開啟 —— 它會起一個本機伺服器並自動開瀏覽器。
+          要給客戶自己點連結看的話，把這些檔案丟上 GitHub Pages 或任何靜態主機（https）也可以。</li>
+      <li><strong>觀看數與讚數是示意數字。</strong>頁面上每張卡片的觀看人數、讚數都是依影片 ID 產生的
+          固定假資料，只為了讓版面看起來完整，<strong>不是真實數據</strong>。對客戶展示時請說明這點。</li>
+      <li><strong>直式卡片會裁掉畫面左右兩側。</strong>YouTube 嵌入是 16:9，這裡的卡片是直式 3:4，
+          用放大裁切來填滿，所以新聞台的跑馬燈、台標可能被切掉。點進大畫面看的是未裁切的完整 16:9。</li>
+      <li><strong>小紅書、抖音的直播無法嵌入。</strong>這兩個平台沒有開放公開的嵌入方式，播放網址是簽章
+          token 加 Referer 鎖定，第三方網頁無法合法播放。這頁的視覺是小紅書風格，內容來源只能是 YouTube。</li>
+      <li><strong>網址格式。</strong>支援 <code>youtube.com/watch?v=…</code>、<code>youtu.be/…</code>、
+          <code>youtube.com/live/…</code>，或直接貼 11 碼影片 ID。</li>
+      <li><strong>頻道網址（<code>/@帳號</code>、<code>/channel/UC…</code>）不能用。</strong>
+          YouTube 已經不支援「自動播出該頻道目前直播」的嵌入方式。取得可用網址的做法：開
+          <code>youtube.com/@帳號/live</code>，等直播載入後從網址列複製 watch 網址。
+          <br><strong>因此預設清單裡的影片 ID 遲早會失效</strong> —— 那張卡片會自己顯示錯誤與說明。
+          <strong>提案當天建議先開一次確認每一路都還活著。</strong></li>
+      <li><strong>自動播放一定是靜音起播</strong>（瀏覽器政策）。同一時間只有一路能有聲音 ——
+          點卡片右上角的喇叭切換，或點進大畫面自動開聲音。</li>
+      <li><strong>捲出畫面的卡片會自動暫停</strong>，捲回來再繼續，避免同時跑太多播放器把電腦拖垮。</li>
+      <li><strong>頻道主可以自行關閉嵌入播放</strong>（錯誤碼 101/150），遇到時該卡片會顯示說明。
+          這個沒有繞路辦法，只能換一路。</li>
+      <li><strong>設定存在瀏覽器的 localStorage。</strong>換電腦不會跟著走 —— 用右下角
+          ＋ 面板裡的「匯出設定」搬過去。</li>
+    </ol>
+  </details>
+</footer>
+
+<div id="detail">
+  <div class="detail-box">
+    <div class="detail-player" id="detailPlayer"></div>
+    <div class="detail-bar">
+      <span class="avatar" id="dAvatar"></span>
+      <div class="detail-info">
+        <h3 id="dTitle"></h3>
+        <p id="dMeta"></p>
+      </div>
+      <a id="dLink" target="_blank" rel="noopener">↗ 在 YouTube 開啟</a>
+      <button id="dClose">✕ 關閉</button>
+    </div>
+  </div>
+</div>
+
+<button id="fab" title="管理直播清單">＋</button>
+
+<div id="sheet">
+  <div class="sheet-box">
+    <h3>管理直播清單</h3>
+    <p class="sub">貼上 YouTube 影片網址新增一路。可用「網址 | 標題」自訂標題，多筆用換行分隔。</p>
+
+    <div class="row">
+      <input type="text" id="addInput" autocomplete="off" placeholder="https://www.youtube.com/watch?v=…">
+      <button class="btn primary" id="btnAdd">新增</button>
+    </div>
+
+    <h4>目前清單</h4>
+    <ul class="stream-list" id="listBox"></ul>
+
+    <h4>匯出 / 匯入設定</h4>
+    <textarea id="sheetText" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:10px; justify-content:flex-end;">
+      <button class="btn" id="btnReset">回復預設</button>
+      <button class="btn" id="btnCopy">複製</button>
+      <button class="btn" id="btnImport">匯入</button>
+      <button class="btn primary" id="btnCloseSheet">完成</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =========================================================
+     常數與預設清單
+     ========================================================= */
+
+  // 鍵名刻意與 live-wall.html 區隔：兩個檔放在同一資料夾時是同源，
+  // 共用鍵名會互相蓋掉設定。
+  var LS_STREAMS = 'liveWallXhs.streams';
+  var LS_FILTER  = 'liveWallXhs.filter';
+  var YT_ORIGIN  = 'https://www.youtube.com';
+
+  var TAGS = ['推薦', '新聞', '知識', '音樂'];
+
+  // 2026-07-23 逐一確認過可嵌入播放。
+  // 直播影片 ID 會隨每一場直播改變，失效時用該台的 youtube.com/@帳號/live 取得新網址。
+  var DEFAULT_STREAMS = [
+    { kind: 'video', ref: 'YDvsBbKfLPA', title: '24 小時英國與國際即時新聞', host: 'Sky News',           tag: '新聞' },
+    { kind: 'video', ref: 'gCNeDWCI0vo', title: '中東與全球局勢英文直播',     host: 'Al Jazeera English', tag: '新聞' },
+    { kind: 'video', ref: 'LuKwFajn37U', title: '德國之聲 24 小時英文新聞',   host: 'DW News',            tag: '新聞' },
+    { kind: 'video', ref: 'pykpO5kQJ98', title: '歐洲即時新聞連線',           host: 'euronews',           tag: '新聞' },
+    { kind: 'video', ref: 'iFzZXUeewbQ', title: '美國每日焦點新聞直播',       host: 'NBC News',           tag: '新聞' },
+    { kind: 'video', ref: 'iipR5yUp36o', title: '突發新聞與現場連線',         host: 'ABC News',           tag: '新聞' },
+    { kind: 'video', ref: 'b8lPrtjmnmw', title: '國際視角的深度新聞',         host: 'TRT World',          tag: '新聞' },
+    { kind: 'video', ref: 'awQzjn72bI0', title: '太空任務與地球實況畫面',     host: 'NASA',               tag: '知識' },
+    { kind: 'video', ref: 'VAlMDl00mYY', title: '放鬆用 lofi 電台，讀書工作都適合', host: 'Lofi Girl',    tag: '音樂' }
+  ];
+
+  /* =========================================================
+     狀態
+     ========================================================= */
+
+  var streams = [];     // [{ id, kind, ref, title, host, tag }]
+  var filter  = '推薦';
+  var query   = '';
+  var audioId = null;   // 目前開聲音的那一路
+  var frames  = {};     // id -> 卡片裡的 iframe
+  var visible = {};     // id -> 是否在視窗內
+  var detailId = null;
+  var seq = 0;
+
+  var plaza    = document.getElementById('plaza');
+  var tabsEl   = document.getElementById('tabs');
+  var emptyEl  = document.getElementById('empty');
+  var toastEl  = document.getElementById('toast');
+  var detail   = document.getElementById('detail');
+  var sheet    = document.getElementById('sheet');
+  var sheetText= document.getElementById('sheetText');
+  var listBox  = document.getElementById('listBox');
+  var toastTimer = null;
+
+  window.__pauseCount = 0;   // 給驗證用：IntersectionObserver 送出過幾次 pause
+
+  /* =========================================================
+     工具
+     ========================================================= */
+
+  function uid() { return 's' + (++seq) + '_' + Math.random().toString(36).slice(2, 7); }
+
+  function toast(msg, isErr) {
+    toastEl.textContent = msg;
+    toastEl.className = 'show' + (isErr ? ' err' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.className = ''; }, isErr ? 5600 : 2600);
+  }
+
+  // 依影片 ID 產生固定的假數字：重整不會跳動，也不會每次 render 都變。
+  function hash(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    return h;
+  }
+
+  function fakeViewers(ref) { return 800 + hash(ref) % 58000; }
+  function fakeLikes(ref)   { return 40 + hash(ref + 'L') % 4200; }
+
+  function formatCount(n) {
+    if (n >= 10000) return (n / 10000).toFixed(1).replace(/\.0$/, '') + '萬';
+    return String(n);
+  }
+
+  function initial(name) {
+    var s = String(name || '?').trim();
+    return s ? s.charAt(0).toUpperCase() : '?';
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(LS_STREAMS, JSON.stringify(streams.map(function (s) {
+        return { kind: 'video', ref: s.ref, title: s.title, host: s.host, tag: s.tag };
+      })));
+      localStorage.setItem(LS_FILTER, filter);
+    } catch (e) { /* 無痕模式等情況，忽略 */ }
+  }
+
+  function load() {
+    var raw = null, f = null;
+    try {
+      raw = localStorage.getItem(LS_STREAMS);
+      f = localStorage.getItem(LS_FILTER);
+    } catch (e) { /* 同上 */ }
+
+    var parsed = null;
+    if (raw) { try { parsed = JSON.parse(raw); } catch (e) { parsed = null; } }
+
+    if (Array.isArray(parsed)) {
+      streams = parsed
+        .filter(function (s) { return s && typeof s.ref === 'string' && VIDEO_ID.test(s.ref); })
+        .map(function (s) {
+          return {
+            id: uid(),
+            kind: 'video',
+            ref: s.ref,
+            title: s.title || s.ref,
+            host: s.host || s.title || s.ref,   // 舊資料沒有 host 就退回 title
+            tag: TAGS.indexOf(s.tag) > 0 ? s.tag : '其他'
+          };
+        });
+    }
+
+    if (!streams.length) {
+      streams = DEFAULT_STREAMS.map(function (s) {
+        return { id: uid(), kind: 'video', ref: s.ref, title: s.title, host: s.host, tag: s.tag };
+      });
+    }
+
+    filter = (f && (TAGS.indexOf(f) >= 0 || f === '其他')) ? f : '推薦';
+  }
+
+  /* =========================================================
+     YouTube 網址解析（沿用 live-wall.html 已驗證的版本）
+     ========================================================= */
+
+  var VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
+  var CHANNEL_ID = /^UC[A-Za-z0-9_-]{22}$/;
+
+  var CHANNEL_HINT =
+    '頻道網址沒辦法直接嵌入 —— YouTube 已經不支援「自動播該頻道目前直播」的嵌入方式。' +
+    '請先開該頻道的 youtube.com/@帳號/live，等直播載入後從網址列複製 watch 網址再貼回來。';
+
+  function parseYouTubeUrl(input) {
+    var raw = String(input || '').trim();
+    if (!raw) return { error: '請先輸入網址。' };
+
+    if (CHANNEL_ID.test(raw)) return { error: CHANNEL_HINT };
+    if (VIDEO_ID.test(raw)) return { kind: 'video', ref: raw };
+
+    var url;
+    try {
+      url = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw);
+    } catch (e) {
+      return { error: '看不懂這個網址：' + raw };
+    }
+
+    var host = url.hostname.replace(/^www\.|^m\./, '').toLowerCase();
+    var seg = url.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+
+    if (host === 'youtu.be') {
+      if (seg[0] && VIDEO_ID.test(seg[0])) return { kind: 'video', ref: seg[0] };
+      return { error: 'youtu.be 網址裡找不到有效的影片 ID：' + raw };
+    }
+
+    if (host !== 'youtube.com' && host !== 'youtube-nocookie.com') {
+      return { error: '只支援 YouTube 網址。小紅書、抖音、Twitch 等平台無法嵌入。' };
+    }
+
+    var v = url.searchParams.get('v');
+    if (v && VIDEO_ID.test(v)) return { kind: 'video', ref: v };
+
+    if (seg.length >= 2 && /^(live|embed|shorts|v)$/.test(seg[0]) && VIDEO_ID.test(seg[1])) {
+      return { kind: 'video', ref: seg[1] };
+    }
+
+    if (seg[0] === 'channel' ||
+        (seg[0] && seg[0].charAt(0) === '@') ||
+        seg[0] === 'c' || seg[0] === 'user') {
+      return { error: CHANNEL_HINT };
+    }
+
+    return { error: '這個 YouTube 網址裡找不到影片 ID：' + raw };
+  }
+
+  /* =========================================================
+     嵌入網址
+     ========================================================= */
+
+  function buildEmbedUrl(stream, unmuted) {
+    var p = [
+      'autoplay=1',
+      'mute=' + (unmuted ? '0' : '1'),
+      'enablejsapi=1',
+      'playsinline=1',
+      'rel=0',
+      'modestbranding=1'
+    ];
+
+    // file:// 開啟時帶 origin 會讓 jsapi 直接壞掉，只有 http(s) 才帶。
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
+      p.push('origin=' + encodeURIComponent(location.origin));
+    }
+
+    return YT_ORIGIN + '/embed/' + encodeURIComponent(stream.ref) + '?' + p.join('&');
+  }
+
+  function watchUrl(stream) { return YT_ORIGIN + '/watch?v=' + stream.ref; }
+
+  /* =========================================================
+     播放器指令（postMessage，不需外部 iframe_api 腳本）
+     ========================================================= */
+
+  function post(iframe, payload) {
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+      iframe.contentWindow.postMessage(JSON.stringify(payload), YT_ORIGIN);
+    } catch (e) { /* 播放器尚未就緒 */ }
+  }
+
+  function handshake(iframe, id) {
+    post(iframe, { event: 'listening', id: id, channel: 'widget' });
+  }
+
+  function cmd(iframe, func, args) {
+    post(iframe, { event: 'command', func: func, args: args || [] });
+  }
+
+  // 播放器 ready 的時間點抓不準，重送幾次比較穩
+  function cmdRetry(iframe, id, func, args) {
+    var tries = 0;
+    (function attempt() {
+      handshake(iframe, id);
+      cmd(iframe, func, args);
+      if (++tries < 4) setTimeout(attempt, 320);
+    })();
+  }
+
+  var ERROR_TEXT = {
+    2:   '影片 ID 無效。',
+    5:   '這個播放器無法播放這部影片。',
+    100: '影片已被移除或設為私人。',
+    101: '頻道主關閉了這部影片的嵌入播放。',
+    150: '頻道主關閉了這部影片的嵌入播放。'
+  };
+
+  window.addEventListener('message', function (e) {
+    if (e.origin !== YT_ORIGIN && e.origin !== 'https://www.youtube-nocookie.com') return;
+    var data;
+    try { data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (err) { return; }
+    if (!data || !data.id) return;
+
+    if (data.event === 'infoDelivery' && data.info &&
+        typeof data.info.errorCode === 'number') {
+      showCardError(data.id, data.info.errorCode);
+    }
+
+    if (data.event === 'onError') {
+      var code = typeof data.info === 'number' ? data.info : parseInt(data.info, 10);
+      if (!isNaN(code)) showCardError(data.id, code);
+    }
+  });
+
+  function showCardError(id, code) {
+    var card = plaza.querySelector('.card[data-id="' + id + '"]');
+    if (!card) return;
+    card.querySelector('.card-error-msg').textContent =
+      (ERROR_TEXT[code] || '這一路無法播放。') + '（錯誤碼 ' + code + '）';
+    card.classList.add('has-error');
+  }
+
+  /* =========================================================
+     音訊獨佔：同時只有一路有聲音
+     ========================================================= */
+
+  function setAudio(id) {
+    var target = (audioId === id) ? null : id;
+    audioId = target;
+
+    streams.forEach(function (s) {
+      var f = frames[s.id];
+      if (!f) return;
+      if (s.id === target) {
+        cmdRetry(f, s.id, 'unMute');
+        cmdRetry(f, s.id, 'setVolume', [100]);
+      } else {
+        cmdRetry(f, s.id, 'mute');
+      }
+    });
+
+    syncAudioUI();
+  }
+
+  function syncAudioUI() {
+    streams.forEach(function (s) {
+      var card = plaza.querySelector('.card[data-id="' + s.id + '"]');
+      if (!card) return;
+      var btn = card.querySelector('.mute-btn');
+      if (!btn) return;
+      var on = (s.id === audioId);
+      btn.textContent = on ? '🔊' : '🔇';
+      btn.classList.toggle('on', on);
+      btn.title = on ? '關閉這一路的聲音' : '只聽這一路';
+    });
+  }
+
+  function muteAllCards() {
+    audioId = null;
+    streams.forEach(function (s) {
+      var f = frames[s.id];
+      if (f) cmdRetry(f, s.id, 'mute');
+    });
+    syncAudioUI();
+  }
+
+  /* =========================================================
+     只播看得見的：捲出畫面就暫停
+     ========================================================= */
+
+  var io = ('IntersectionObserver' in window)
+    ? new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          var card = en.target;
+          var id = card.dataset.id;
+          var f = frames[id];
+          if (!f) return;
+
+          // 大畫面開著時，廣場一律保持暫停，不要跟 detail 搶頻寬
+          if (detailId) return;
+
+          if (en.isIntersecting) {
+            if (!visible[id]) { visible[id] = true; cmd(f, 'playVideo'); }
+          } else if (visible[id]) {
+            visible[id] = false;
+            cmd(f, 'pauseVideo');
+            window.__pauseCount++;
+          }
+        });
+      }, { rootMargin: '120px 0px' })
+    : null;
+
+  function pauseAllCards() {
+    streams.forEach(function (s) {
+      var f = frames[s.id];
+      if (f) cmd(f, 'pauseVideo');
+    });
+  }
+
+  function resumeVisibleCards() {
+    streams.forEach(function (s) {
+      var f = frames[s.id];
+      // 用 !== false 而不是 truthy 判斷：瀏覽器不支援 IntersectionObserver、
+      // 或分頁在背景被節流導致觀察器從未觸發時，visible[id] 會是 undefined。
+      // 那種情況要當成「看得見」照樣恢復播放，否則關掉大畫面後整個廣場會停住不動。
+      if (f && visible[s.id] !== false) cmd(f, 'playVideo');
+    });
+  }
+
+  /* =========================================================
+     渲染
+     ========================================================= */
+
+  function visibleStreams() {
+    var q = query.trim().toLowerCase();
+    return streams.filter(function (s) {
+      if (filter !== '推薦' && s.tag !== filter) return false;
+      if (!q) return true;
+      return (s.title + ' ' + s.host).toLowerCase().indexOf(q) !== -1;
+    });
+  }
+
+  function renderTabs() {
+    tabsEl.innerHTML = '';
+    TAGS.forEach(function (t) {
+      var b = document.createElement('button');
+      b.className = 'tab' + (t === filter ? ' on' : '');
+      b.textContent = t;
+      b.addEventListener('click', function () {
+        filter = t;
+        save();
+        renderTabs();
+        render();
+      });
+      tabsEl.appendChild(b);
+    });
+  }
+
+  function render() {
+    // 重建卡片會丟掉 iframe，音訊與可見狀態一併重置
+    plaza.innerHTML = '';
+    frames = {};
+    visible = {};
+    audioId = null;
+
+    var list = visibleStreams();
+    list.forEach(function (s) { plaza.appendChild(buildCard(s)); });
+
+    emptyEl.classList.toggle('show', list.length === 0);
+  }
+
+  function buildCard(s) {
+    var card = document.createElement('article');
+    card.className = 'card';
+    card.dataset.id = s.id;
+
+    // --- 影像區 ---
+    var media = document.createElement('div');
+    media.className = 'card-media';
+
+    var iframe = document.createElement('iframe');
+    iframe.src = buildEmbedUrl(s, false);
+    iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    iframe.title = s.title;
+    iframe.addEventListener('load', function () { handshake(iframe, s.id); });
+    frames[s.id] = iframe;
+    media.appendChild(iframe);
+
+    var tag = document.createElement('span');
+    tag.className = 'live-tag';
+    tag.innerHTML = '<i class="dot"></i>LIVE';
+    media.appendChild(tag);
+
+    var mute = document.createElement('button');
+    mute.className = 'mute-btn';
+    mute.type = 'button';
+    mute.textContent = '🔇';
+    mute.title = '只聽這一路';
+    mute.addEventListener('click', function (e) {
+      e.stopPropagation();          // 不要順便觸發卡片的展開
+      setAudio(s.id);
+    });
+    media.appendChild(mute);
+
+    var grad = document.createElement('div');
+    grad.className = 'media-grad';
+    var vw = document.createElement('span');
+    vw.className = 'viewers';
+    vw.textContent = '👁 ' + formatCount(fakeViewers(s.ref)) + ' 人在看';
+    grad.appendChild(vw);
+    media.appendChild(grad);
+
+    media.appendChild(buildErrorLayer(s));
+    card.appendChild(media);
+
+    // --- 文字區 ---
+    var body = document.createElement('div');
+    body.className = 'card-body';
+
+    var title = document.createElement('p');
+    title.className = 'card-title';
+    title.textContent = s.title;
+    body.appendChild(title);
+
+    var meta = document.createElement('div');
+    meta.className = 'card-meta';
+
+    var av = document.createElement('span');
+    av.className = 'avatar';
+    av.textContent = initial(s.host);
+    meta.appendChild(av);
+
+    var host = document.createElement('span');
+    host.className = 'host';
+    host.textContent = s.host;
+    meta.appendChild(host);
+
+    var likes = document.createElement('span');
+    likes.className = 'likes';
+    likes.textContent = '♡ ' + formatCount(fakeLikes(s.ref));
+    meta.appendChild(likes);
+
+    body.appendChild(meta);
+    card.appendChild(body);
+
+    card.addEventListener('click', function () { openDetail(s.id); });
+
+    if (io) io.observe(card);
+    return card;
+  }
+
+  function buildErrorLayer(s) {
+    var layer = document.createElement('div');
+    layer.className = 'card-error';
+
+    var msg = document.createElement('div');
+    msg.className = 'card-error-msg';
+    layer.appendChild(msg);
+
+    var hint = document.createElement('div');
+    hint.className = 'card-error-hint';
+    hint.textContent = '若是直播已結束，用該台的 /live 頁面取得新網址，再到 ＋ 面板換掉這一路。';
+    layer.appendChild(hint);
+
+    return layer;
+  }
+
+  /* =========================================================
+     大畫面
+     ========================================================= */
+
+  function openDetail(id) {
+    var s = streams.find(function (x) { return x.id === id; });
+    if (!s) return;
+
+    detailId = id;
+    muteAllCards();
+    pauseAllCards();
+
+    var box = document.getElementById('detailPlayer');
+    box.innerHTML = '';
+
+    var f = document.createElement('iframe');
+    f.src = buildEmbedUrl(s, true);      // 大畫面直接開聲音
+    f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    f.setAttribute('allowfullscreen', '');
+    f.referrerPolicy = 'strict-origin-when-cross-origin';
+    f.title = s.title;
+    box.appendChild(f);
+
+    document.getElementById('dAvatar').textContent = initial(s.host);
+    document.getElementById('dTitle').textContent = s.title;
+    document.getElementById('dMeta').textContent =
+      s.host + ' · ' + formatCount(fakeViewers(s.ref)) + ' 人在看 · ' + s.tag;
+    document.getElementById('dLink').href = watchUrl(s);
+
+    detail.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetail() {
+    if (!detailId) return;
+    detailId = null;
+    document.getElementById('detailPlayer').innerHTML = '';   // 停掉大畫面的播放
+    detail.classList.remove('open');
+    document.body.style.overflow = '';
+    resumeVisibleCards();
+    syncAudioUI();
+  }
+
+  detail.addEventListener('click', function (e) { if (e.target === detail) closeDetail(); });
+  document.getElementById('dClose').addEventListener('click', closeDetail);
+  document.getElementById('dLink').addEventListener('click', function (e) { e.stopPropagation(); });
+
+  /* =========================================================
+     新增 / 移除
+     ========================================================= */
+
+  function addFromText(text) {
+    var lines = String(text).split(/[\r\n]+/).map(function (l) { return l.trim(); }).filter(Boolean);
+    if (!lines.length) { toast('請先輸入網址。', true); return false; }
+
+    var added = 0, errors = [];
+
+    lines.forEach(function (line) {
+      var parts = line.split('|');
+      var urlPart = parts[0].trim();
+      var titlePart = parts.length > 1 ? parts.slice(1).join('|').trim() : '';
+
+      var r = parseYouTubeUrl(urlPart);
+      if (r.error) { errors.push(r.error); return; }
+
+      if (streams.some(function (s) { return s.ref === r.ref; })) {
+        errors.push('這一路已經在廣場上了：' + r.ref);
+        return;
+      }
+
+      streams.push({
+        id: uid(),
+        kind: 'video',
+        ref: r.ref,
+        title: titlePart || r.ref,
+        host: titlePart || r.ref,
+        tag: '其他'
+      });
+      added++;
+    });
+
+    if (added) { save(); render(); renderList(); }
+
+    if (added && !errors.length) toast('已新增 ' + added + ' 路直播。');
+    else if (added && errors.length) toast('已新增 ' + added + ' 路；' + errors.length + ' 筆失敗 — ' + errors[0], true);
+    else toast(errors[0] || '沒有新增任何直播。', true);
+
+    return added > 0;
+  }
+
+  function removeStream(id) {
+    var i = streams.findIndex(function (s) { return s.id === id; });
+    if (i < 0) return;
+    var t = streams[i].title;
+    streams.splice(i, 1);
+    if (audioId === id) audioId = null;
+    delete frames[id];
+    delete visible[id];
+    save();
+    render();
+    renderList();
+    toast('已移除「' + t + '」。');
+  }
+
+  /* =========================================================
+     底部管理面板
+     ========================================================= */
+
+  function renderList() {
+    listBox.innerHTML = '';
+    streams.forEach(function (s) {
+      var li = document.createElement('li');
+
+      var t = document.createElement('span');
+      t.className = 's-title';
+      t.textContent = s.title + '（' + s.host + '）';
+      li.appendChild(t);
+
+      var tg = document.createElement('span');
+      tg.className = 's-tag';
+      tg.textContent = s.tag;
+      li.appendChild(tg);
+
+      var del = document.createElement('button');
+      del.className = 's-del';
+      del.type = 'button';
+      del.textContent = '✕';
+      del.title = '移除';
+      del.addEventListener('click', function () { removeStream(s.id); });
+      li.appendChild(del);
+
+      listBox.appendChild(li);
+    });
+  }
+
+  function openSheet() {
+    sheetText.value = JSON.stringify(
+      streams.map(function (s) {
+        return { kind: 'video', ref: s.ref, title: s.title, host: s.host, tag: s.tag };
+      }), null, 2
+    );
+    renderList();
+    sheet.classList.add('open');
+  }
+
+  function closeSheet() { sheet.classList.remove('open'); }
+
+  document.getElementById('fab').addEventListener('click', openSheet);
+  document.getElementById('btnCloseSheet').addEventListener('click', closeSheet);
+  sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
+
+  document.getElementById('btnAdd').addEventListener('click', function () {
+    var input = document.getElementById('addInput');
+    if (addFromText(input.value)) {
+      input.value = '';
+      sheetText.value = JSON.stringify(
+        streams.map(function (s) {
+          return { kind: 'video', ref: s.ref, title: s.title, host: s.host, tag: s.tag };
+        }), null, 2
+      );
+    }
+  });
+
+  document.getElementById('addInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnAdd').click(); }
+  });
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    sheetText.select();
+    navigator.clipboard.writeText(sheetText.value).then(function () {
+      toast('已複製到剪貼簿。');
+    }).catch(function () {
+      toast('複製失敗，請手動全選複製。', true);
+    });
+  });
+
+  document.getElementById('btnImport').addEventListener('click', function () {
+    var parsed;
+    try { parsed = JSON.parse(sheetText.value); } catch (e) {
+      toast('JSON 格式有誤，無法匯入。', true);
+      return;
+    }
+    if (!Array.isArray(parsed) || !parsed.length) { toast('JSON 必須是非空的陣列。', true); return; }
+
+    var next = [];
+    for (var i = 0; i < parsed.length; i++) {
+      var s = parsed[i];
+      if (!s || typeof s.ref !== 'string' || !VIDEO_ID.test(s.ref)) {
+        toast('第 ' + (i + 1) + ' 筆格式不對：需要 11 碼的 ref 影片 ID。', true);
+        return;
+      }
+      next.push({
+        id: uid(),
+        kind: 'video',
+        ref: s.ref,
+        title: s.title || s.ref,
+        host: s.host || s.title || s.ref,
+        tag: TAGS.indexOf(s.tag) > 0 ? s.tag : '其他'
+      });
+    }
+
+    streams = next;
+    audioId = null;
+    save();
+    render();
+    renderList();
+    toast('已匯入 ' + next.length + ' 路直播。');
+  });
+
+  document.getElementById('btnReset').addEventListener('click', function () {
+    streams = DEFAULT_STREAMS.map(function (s) {
+      return { id: uid(), kind: 'video', ref: s.ref, title: s.title, host: s.host, tag: s.tag };
+    });
+    audioId = null;
+    filter = '推薦';
+    query = '';
+    document.getElementById('q').value = '';
+    save();
+    renderTabs();
+    render();
+    renderList();
+    toast('已回復預設清單。');
+  });
+
+  /* =========================================================
+     搜尋
+     ========================================================= */
+
+  document.getElementById('q').addEventListener('input', function (e) {
+    query = e.target.value;
+    render();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (detail.classList.contains('open')) closeDetail();
+    else if (sheet.classList.contains('open')) closeSheet();
+  });
+
+  /* =========================================================
+     啟動
+     ========================================================= */
+
+  // file:// 開啟時 YouTube 會回錯誤碼 153（收不到 Referer），先把原因講清楚
+  if (location.protocol === 'file:') {
+    document.getElementById('fileWarn').classList.add('show');
+  }
+
+  load();
+  renderTabs();
+  render();
+})();
+</script>
+</body>
+</html>
