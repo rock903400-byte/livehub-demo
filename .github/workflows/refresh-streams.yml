@@ -1,21 +1,15 @@
 name: 更新直播來源清單
 
 # 直播影片 ID 每換一場就會變，寫死在頁面裡的清單會逐漸失效。
-# 這個排程定期重新解析各頻道目前的直播，把結果寫進 streams.json。
+# 這個排程定期重新查詢各頻道目前的直播，把結果寫進 streams.json。
 #
-# 排程目前停用中。原因：從 GitHub Actions 的資料中心 IP 請求 YouTube 的 /live
-# 頁面時，回來的頁面結構與一般網路不同，canonical 會指向推薦區塊裡不相干的影片
-# —— 實測 9 路有 8 路解析錯誤，NBC News 與 TRT World 甚至同時被解析成 Jon
-# Stewart 的節目。腳本現已加上歸屬驗證會擋掉這類結果，但擋掉之後 CI 上就等於
-# 永遠解析不出新 ID，排程沒有意義。
-#
-# 目前的用法是在一般網路環境手動執行 `node scripts/refresh-streams.mjs`。
-# 若要恢復全自動，需改接 YouTube Data API（需要 API 金鑰）。
-#
+# 需要 repository secret：YT_API_KEY（YouTube Data API v3 金鑰）。
+# 沒設的話腳本會退回網頁解析，而網頁解析從 Actions 的資料中心 IP 執行會
+# 解析到不相干的影片 —— 屆時歸屬驗證會擋下來，streams.json 維持不變。
 on:
-  # schedule:
-  #   - cron: '0 */6 * * *'
-  workflow_dispatch:         # 只保留手動觸發
+  schedule:
+    - cron: '0 */6 * * *'   # 每 6 小時。GitHub 排程在尖峰時可能延後數十分鐘，屬正常。
+  workflow_dispatch:         # 也可以在 Actions 頁面手動觸發
 
 # 同時只跑一個，避免兩次排程互相踩到
 concurrency:
@@ -35,7 +29,19 @@ jobs:
         with:
           node-version: '20'
 
-      - name: 解析各頻道目前的直播 ID
+      - name: 檢查是否已設定 API 金鑰
+        env:
+          YT_API_KEY: ${{ secrets.YT_API_KEY }}
+        run: |
+          if [ -z "$YT_API_KEY" ]; then
+            echo "::error::未設定 YT_API_KEY secret。網頁解析在 Actions 環境不可信，中止。"
+            echo "請到 Settings > Secrets and variables > Actions 新增 YT_API_KEY。"
+            exit 1
+          fi
+
+      - name: 查詢各頻道目前的直播
+        env:
+          YT_API_KEY: ${{ secrets.YT_API_KEY }}
         run: node scripts/refresh-streams.mjs
 
       - name: 有變動才 commit
@@ -49,3 +55,10 @@ jobs:
           git add streams.json
           git commit -m "chore: 更新直播來源清單"
           git push
+
+      - name: 觸發 Pages 重建
+        # legacy Pages 對 bot 推送的 commit 不一定會自動重建，直接戳一次比較保險。
+        # 沒有新 commit 時重跑一次建置也無害。
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" || true
