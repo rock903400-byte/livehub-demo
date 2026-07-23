@@ -242,9 +242,11 @@
     padding: 14px;
     box-shadow: var(--shadow);
   }
+  /* 3 欄 × 2 列 = 6 格。可放上門面的安全來源只有 7 個，排 4×2 會出現
+     重複的縮圖（看起來像 bug），6 格剛好每格都不一樣，圖也更大更清楚。 */
   .mock-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
   }
   @media (max-width: 700px) { .mock-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -335,7 +337,7 @@
     background: #16181c;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-auto-rows: 1fr;
+    grid-template-rows: repeat(2, 1fr);
     gap: 5px;
   }
   .preview-wall .pv {
@@ -541,8 +543,6 @@
           <div class="mock-cell"><span class="veil"></span><span class="name">氣象連線</span><span class="spk">🔇</span></div>
           <div class="mock-cell"><span class="veil"></span><span class="name">地方頻道</span><span class="spk">🔇</span></div>
           <div class="mock-cell"><span class="veil"></span><span class="name">官方發布</span><span class="spk">🔇</span></div>
-          <div class="mock-cell"><span class="veil"></span><span class="name">活動主舞台</span><span class="spk">🔇</span></div>
-          <div class="mock-cell"><span class="veil"></span><span class="name">備援訊號</span><span class="spk">🔇</span></div>
         </div>
         <p class="mock-caption" id="heroCaption">紅框那一路是目前唯一有聲音的，點喇叭即可換人講話。</p>
       </div>
@@ -796,7 +796,7 @@
     var box = document.getElementById('pvWall');
     if (!box) return;
     box.textContent = '';
-    for (var i = 0; i < 9; i++) {
+    for (var i = 0; i < 6; i++) {
       var cell = document.createElement('div');
       cell.className = 'pv';
       cell.appendChild(mkImg(list[i % list.length].ref, true));
@@ -827,9 +827,18 @@
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (data) {
       if (!data || !Array.isArray(data.streams)) return;
-      var list = data.streams.filter(function (s) {
+
+      var valid = data.streams.filter(function (s) {
         return s && typeof s.ref === 'string' && VIDEO_ID.test(s.ref);
       });
+
+      // 只用標了 safe 的來源當門面。新聞台的縮圖內容無法預期 —— 隨時可能
+      // 是命案特寫、戰地或災難畫面，出現在銷售頁首屏是品牌風險。
+      // 標 safe 的是常年不換題材的 24/7 直播，畫面永遠可以見人。
+      // 萬一 streams.json 是還沒有 safe 欄位的舊版，就退回全部，
+      // 至少畫面不會空掉。
+      var list = valid.filter(function (s) { return s.safe; });
+      if (!list.length) list = valid;
       if (!list.length) return;
 
       fillHero(list);
@@ -837,8 +846,8 @@
       fillPlaza(list);
 
       var cap = document.getElementById('heroCaption');
-      if (cap) cap.textContent = '以上為目前實際在播的 ' + list.length +
-                                 ' 路直播。紅框那一路是唯一有聲音的，點喇叭即可換人講話。';
+      if (cap) cap.textContent = '以上為目前實際在播的直播畫面（共 ' + valid.length +
+                                 ' 路，此處取其中數路示意）。紅框那一路是唯一有聲音的，點喇叭即可換人講話。';
     })
     .catch(function () { /* 沒網路或檔案不在，維持佔位方塊 */ });
 })();

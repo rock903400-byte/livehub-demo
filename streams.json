@@ -1,13 +1,14 @@
 {
-  "updatedAt": "2026-07-23T09:12:36.190Z",
+  "updatedAt": "2026-07-23T09:37:37.196Z",
   "note": "由 scripts/refresh-streams.mjs 自動產生，請勿手改。頻道清單在該腳本的 SOURCES。",
   "streams": [
     {
       "handle": "SkyNews",
-      "ref": "g_v4BCbOwGA",
+      "ref": "8GBuV2PW3L0",
       "host": "Sky News",
       "title": "24 小時英國與國際即時新聞",
       "tag": "新聞",
+      "safe": false,
       "stale": false
     },
     {
@@ -16,6 +17,7 @@
       "host": "Al Jazeera English",
       "title": "中東與全球局勢英文直播",
       "tag": "新聞",
+      "safe": false,
       "stale": false
     },
     {
@@ -24,6 +26,7 @@
       "host": "DW News",
       "title": "德國之聲 24 小時英文新聞",
       "tag": "新聞",
+      "safe": false,
       "stale": false
     },
     {
@@ -32,6 +35,7 @@
       "host": "euronews",
       "title": "歐洲即時新聞連線",
       "tag": "新聞",
+      "safe": false,
       "stale": false
     },
     {
@@ -40,6 +44,7 @@
       "host": "NBC News",
       "title": "美國每日焦點新聞直播",
       "tag": "新聞",
+      "safe": false,
       "stale": false
     },
     {
@@ -48,6 +53,7 @@
       "host": "ABC News",
       "title": "突發新聞與現場連線",
       "tag": "新聞",
+      "safe": false,
       "stale": false
     },
     {
@@ -56,6 +62,7 @@
       "host": "TRT World",
       "title": "國際視角的深度新聞",
       "tag": "新聞",
+      "safe": false,
       "stale": false
     },
     {
@@ -64,6 +71,34 @@
       "host": "NASA",
       "title": "太空任務與地球實況畫面",
       "tag": "知識",
+      "safe": true,
+      "stale": false
+    },
+    {
+      "handle": "nasaspaceflight",
+      "ref": "Jm8wRjD3xVA",
+      "host": "NASASpaceflight",
+      "title": "太空海岸發射場 24 小時實況",
+      "tag": "知識",
+      "safe": true,
+      "stale": false
+    },
+    {
+      "handle": "MontereyBayAquarium",
+      "ref": "zL68biE6wAs",
+      "host": "Monterey Bay Aquarium",
+      "title": "水母缸實況，療癒系畫面",
+      "tag": "知識",
+      "safe": true,
+      "stale": false
+    },
+    {
+      "handle": "SkylineWebcams",
+      "ref": "kUfuwa8mDrA",
+      "host": "SkylineWebcams",
+      "title": "世界各地景點即時攝影機",
+      "tag": "知識",
+      "safe": true,
       "stale": false
     },
     {
@@ -72,6 +107,25 @@
       "host": "Lofi Girl",
       "title": "放鬆用 lofi 電台，讀書工作都適合",
       "tag": "音樂",
+      "safe": true,
+      "stale": false
+    },
+    {
+      "handle": "thegoodliferadio",
+      "ref": "IkmLXvBfVv0",
+      "host": "The Good Life Radio x Sensual Musique",
+      "title": "深浩室 24 小時電台",
+      "tag": "音樂",
+      "safe": true,
+      "stale": false
+    },
+    {
+      "handle": "CafeMusicBGMChannel",
+      "ref": "kXPmWVlJrfs",
+      "host": "Cafe Music BGM channel",
+      "title": "咖啡廳爵士背景音樂",
+      "tag": "音樂",
+      "safe": true,
       "stale": false
     }
   ]

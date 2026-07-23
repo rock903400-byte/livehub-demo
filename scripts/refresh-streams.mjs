@@ -38,6 +38,11 @@ const API = 'https://www.googleapis.com/youtube/v3/';
 // 頻道清單與展示用中繼資料的唯一真實來源。
 // channelId 是頻道的永久識別碼，不會變，寫死可以省下查詢的配額。
 // host 必須與 YouTube 上的頻道顯示名稱一致 —— 網頁解析路徑用它做歸屬驗證。
+//
+// safe: 可以放上行銷頁當門面的來源。新聞台的縮圖內容無法預期（可能是命案、
+// 戰地或災難畫面），出現在銷售頁的首屏是風險；標 safe 的都是常年不換題材的
+// 24/7 直播（太空、水族、風景、音樂電台），畫面永遠可以見人。
+// Demo 頁不分 safe 與否，九路新聞照常呈現。
 const SOURCES = [
   { handle: 'SkyNews',          channelId: 'UCoMdktPbSTixAyNGwb-UYkQ', host: 'Sky News',           title: '24 小時英國與國際即時新聞', tag: '新聞' },
   { handle: 'AlJazeeraEnglish', channelId: 'UCNye-wNBqNL5ZzHSJj3l8Bg', host: 'Al Jazeera English', title: '中東與全球局勢英文直播',     tag: '新聞' },
@@ -46,8 +51,14 @@ const SOURCES = [
   { handle: 'NBCNews',          channelId: 'UCeY0bbntWzzVIaj2z3QigXg', host: 'NBC News',           title: '美國每日焦點新聞直播',       tag: '新聞' },
   { handle: 'ABCNews',          channelId: 'UCBi2mrWuNuyYy4gbM6fU18Q', host: 'ABC News',           title: '突發新聞與現場連線',         tag: '新聞' },
   { handle: 'trtworld',         channelId: 'UC7fWeaHhqgM4Ry-RMpM2YYw', host: 'TRT World',          title: '國際視角的深度新聞',         tag: '新聞' },
-  { handle: 'NASA',             channelId: 'UCLA_DiR1FfKNvjuUpBHmylQ', host: 'NASA',               title: '太空任務與地球實況畫面',     tag: '知識' },
-  { handle: 'LofiGirl',         channelId: 'UCSJ4gkVC6NrvII8umztf0Ow', host: 'Lofi Girl',          title: '放鬆用 lofi 電台，讀書工作都適合', tag: '音樂' }
+
+  { handle: 'NASA',                channelId: 'UCLA_DiR1FfKNvjuUpBHmylQ', host: 'NASA',                  title: '太空任務與地球實況畫面',   tag: '知識', safe: true },
+  { handle: 'nasaspaceflight',     channelId: 'UCSUu1lih2RifWkKtDOJdsBA', host: 'NASASpaceflight',       title: '太空海岸發射場 24 小時實況', tag: '知識', safe: true },
+  { handle: 'MontereyBayAquarium', channelId: 'UCnM5iMGiKsZg-iOlIO2ZkdQ', host: 'Monterey Bay Aquarium', title: '水母缸實況，療癒系畫面',   tag: '知識', safe: true },
+  { handle: 'SkylineWebcams',      channelId: 'UC2WMV4vCYurHdHPd9pCqYSg', host: 'SkylineWebcams',        title: '世界各地景點即時攝影機',   tag: '知識', safe: true },
+  { handle: 'LofiGirl',            channelId: 'UCSJ4gkVC6NrvII8umztf0Ow', host: 'Lofi Girl',             title: '放鬆用 lofi 電台，讀書工作都適合', tag: '音樂', safe: true },
+  { handle: 'thegoodliferadio',    channelId: 'UChs0pSaEoNLV4mevBFGaoKA', host: 'The Good Life Radio x Sensual Musique', title: '深浩室 24 小時電台', tag: '音樂', safe: true },
+  { handle: 'CafeMusicBGMChannel', channelId: 'UCJhjE7wbdYAae1G25m0tHAA', host: 'Cafe Music BGM channel', title: '咖啡廳爵士背景音樂',      tag: '音樂', safe: true }
 ];
 
 // 與兩個頁面裡的 VIDEO_ID 規則一致
@@ -296,6 +307,7 @@ async function main() {
       host: src.host,
       title: src.title,
       tag: src.tag,
+      safe: Boolean(src.safe),
       stale: stale
     });
 
