@@ -3,89 +3,619 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>多路直播展示 · LiveHub</title>
+<title>LiveHub — 多路直播同步監看方案</title>
+<meta name="description" content="同時播放多路直播，音訊只走你選的那一路。適用於場域看板、戰情監看牆與活動多視角觀看頁。">
 <style>
+  :root {
+    --red: #ff2442;
+    --red-soft: #fff1f3;
+    --bg: #f6f6f7;
+    --surface: #ffffff;
+    --text-1: #23252b;
+    --text-2: #61646c;
+    --text-3: #9a9ea6;
+    --line: #ececef;
+    --shadow: 0 2px 10px rgba(20,22,28,.05);
+    --shadow-lift: 0 10px 26px rgba(20,22,28,.12);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --red: #ff4a63;
+      --red-soft: #35181d;
+      --bg: #131417;
+      --surface: #1b1d21;
+      --text-1: #eceef2;
+      --text-2: #a3a8b2;
+      --text-3: #71767f;
+      --line: #2a2d33;
+      --shadow: 0 2px 10px rgba(0,0,0,.3);
+      --shadow-lift: 0 10px 26px rgba(0,0,0,.45);
+    }
+  }
+
   * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
   body {
     margin: 0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 20px;
-    background: #f6f6f7;
-    color: #23252b;
+    background: var(--bg);
+    color: var(--text-1);
     font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei",
                  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    line-height: 1.6;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { width: min(880px, 100%); }
-  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -.4px; }
-  .lead { color: #61646c; margin: 0 0 28px; font-size: 15px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+
+  .wrap { width: min(1040px, 100%); margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- 頁首 ---------- */
+  header.top {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -.3px;
+    white-space: nowrap;
+    color: inherit;
+    text-decoration: none;
+  }
+  .brand-mark {
+    width: 28px; height: 28px;
+    border-radius: 9px;
+    background: var(--red);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .brand small {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-3);
+    letter-spacing: .4px;
+  }
+  .top-links {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-size: 14px;
+  }
+  .top-links a {
+    color: var(--text-2);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .top-links a:hover { color: var(--red); }
+  .top-links .demo-link {
+    color: var(--red);
+    font-weight: 600;
+  }
+  @media (max-width: 640px) {
+    .top-links a.hide-sm { display: none; }
+  }
+
+  /* ---------- 區塊通用 ---------- */
+  section { padding: 68px 0; }
+  section + section { border-top: 1px solid var(--line); }
+
+  .eyebrow {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .8px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--red-soft);
+    color: var(--red);
+    margin-bottom: 14px;
+  }
+  h2.sec {
+    font-size: 27px;
+    line-height: 1.4;
+    letter-spacing: -.5px;
+    margin: 0 0 10px;
+  }
+  p.sec-lead {
+    margin: 0 0 34px;
+    color: var(--text-2);
+    font-size: 16px;
+    max-width: 60ch;
+  }
+
+  .grid { display: grid; gap: 18px; }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+  }
   a.card {
     display: block;
-    background: #fff;
-    border: 1px solid #ececef;
-    border-radius: 14px;
-    padding: 22px;
-    text-decoration: none;
     color: inherit;
-    box-shadow: 0 2px 10px rgba(20,22,28,.05);
+    text-decoration: none;
     transition: transform .18s, box-shadow .18s, border-color .18s;
   }
   a.card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 26px rgba(20,22,28,.12);
-    border-color: #ff2442;
+    box-shadow: var(--shadow-lift);
+    border-color: var(--red);
   }
-  .tagline {
+  .card h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: -.2px; }
+  .card p { margin: 0; color: var(--text-2); font-size: 14.5px; }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 84px 0 72px; }
+  .hero h1 {
+    font-size: clamp(30px, 5.2vw, 46px);
+    line-height: 1.28;
+    letter-spacing: -1.2px;
+    margin: 0 0 18px;
+    max-width: 17ch;
+  }
+  .hero .lead {
+    font-size: 17px;
+    color: var(--text-2);
+    max-width: 56ch;
+    margin: 0 0 32px;
+  }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn {
+    display: inline-block;
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform .16s, box-shadow .16s, background .16s;
+  }
+  .btn-primary {
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(255,36,66,.24);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(255,36,66,.32); }
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--text-1);
+    border-color: var(--line);
+    box-shadow: var(--shadow);
+  }
+  .btn-ghost:hover { transform: translateY(-2px); border-color: var(--red); }
+  .hero .fineprint {
+    margin: 20px 0 0;
+    font-size: 13px;
+    color: var(--text-3);
+  }
+
+  /* Hero 示意圖 */
+  .hero-visual {
+    margin-top: 44px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+  }
+  .mock-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  @media (max-width: 700px) { .mock-grid { grid-template-columns: repeat(2, 1fr); } }
+  .mock-cell {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #2b2f38, #1a1d23);
+    overflow: hidden;
+  }
+  .mock-cell::after {
+    content: "🔇";
+    position: absolute;
+    right: 6px; bottom: 5px;
+    font-size: 11px;
+    opacity: .55;
+  }
+  .mock-cell.live::after { content: "🔊"; opacity: 1; }
+  .mock-cell.live { outline: 2px solid var(--red); outline-offset: -2px; }
+  .mock-cell span {
+    position: absolute;
+    left: 7px; top: 6px;
+    font-size: 10.5px;
+    color: rgba(255,255,255,.72);
+    letter-spacing: .3px;
+  }
+  .mock-caption {
+    margin: 12px 4px 2px;
+    font-size: 12.5px;
+    color: var(--text-3);
+    text-align: center;
+  }
+
+  /* ---------- 情境大卡 ---------- */
+  .usecase {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 26px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+  }
+  .usecase .who {
+    font-size: 12px;
+    color: var(--text-3);
+    letter-spacing: .3px;
+    margin: 0 0 4px;
+  }
+  .usecase h3 { margin: 0 0 12px; font-size: 19px; letter-spacing: -.3px; }
+  .usecase ul {
+    margin: 0 0 18px;
+    padding-left: 18px;
+    color: var(--text-2);
+    font-size: 14.5px;
+  }
+  .usecase li { margin-bottom: 6px; }
+  .usecase .rec {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  .usecase .rec strong { color: var(--red); font-weight: 600; }
+
+  /* ---------- 對照表 ---------- */
+  .layout-card .tag {
     display: inline-block;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: .5px;
     padding: 3px 9px;
     border-radius: 999px;
-    background: #fff1f3;
-    color: #ff2442;
+    background: var(--red-soft);
+    color: var(--red);
     margin-bottom: 10px;
   }
-  .tagline.dark { background: #eef0f4; color: #61646c; }
-  a.card h2 { margin: 0 0 6px; font-size: 18px; }
-  a.card p { margin: 0; color: #61646c; font-size: 14px; }
-  footer {
-    margin-top: 26px;
-    font-size: 13px;
-    color: #9a9ea6;
-    border-top: 1px solid #ececef;
-    padding-top: 16px;
+  .layout-card .tag.neutral { background: var(--line); color: var(--text-2); }
+  .layout-card .fits {
+    margin: 14px 0 0;
+    font-size: 13.5px;
+    color: var(--text-2);
   }
-  footer strong { color: #61646c; }
+  .layout-card .fits b { color: var(--text-1); font-weight: 600; }
+  .layout-card .go {
+    margin: 16px 0 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--red);
+  }
+
+  /* ---------- 邊界 ---------- */
+  .notes {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--red);
+    border-radius: 12px;
+    padding: 24px 26px;
+  }
+  .notes ol {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--text-2);
+    font-size: 14.5px;
+  }
+  .notes li { margin-bottom: 10px; }
+  .notes li:last-child { margin-bottom: 0; }
+  .notes b { color: var(--text-1); font-weight: 600; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .88em;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 5px;
+  }
+
+  /* ---------- 結尾 CTA ---------- */
+  .final {
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 52px 26px;
+    box-shadow: var(--shadow);
+  }
+  .final h2 { font-size: 25px; letter-spacing: -.5px; margin: 0 0 10px; }
+  .final p { color: var(--text-2); margin: 0 0 26px; font-size: 16px; }
+  .final .cta-row { justify-content: center; }
+
+  /* ---------- 頁尾 ---------- */
+  footer.site {
+    border-top: 1px solid var(--line);
+    padding: 30px 0 44px;
+    font-size: 13px;
+    color: var(--text-3);
+    line-height: 1.8;
+  }
+  footer.site strong { color: var(--text-2); }
+  footer.site a { color: var(--text-2); }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>多路直播展示</h1>
-    <p class="lead">同一套功能，兩種版面。皆為提案展示用的原型，直播來源為 YouTube 官方嵌入。</p>
 
-    <div class="grid">
-      <a class="card" href="live-wall-xhs.html">
-        <span class="tagline">小紅書風格</span>
-        <h2>直播廣場</h2>
-        <p>淺色卡片瀑布流、分類分頁與搜尋，點卡片展開大畫面。適合展示消費端的瀏覽體驗。</p>
-      </a>
-
-      <a class="card" href="live-wall.html">
-        <span class="tagline dark">監看牆</span>
-        <h2>多路直播牆</h2>
-        <p>深色格狀版面，2×2 / 3×3 / 4×4 切換，單格放大與音訊獨佔。適合展示同時盯多路的情境。</p>
-      </a>
-    </div>
-
-    <footer>
-      <strong>說明：</strong>頁面上的觀看數與讚數為示意數字，非真實數據。品牌名稱為中性佔位，非任何實際企業。
-      小紅書與抖音的直播無法嵌入第三方網頁，此處內容來源均為 YouTube。
-    </footer>
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark">直</span>
+      <span>多路直播監看 <small>LiveHub</small></span>
+    </a>
+    <nav class="top-links">
+      <a class="hide-sm" href="#usecases">使用情境</a>
+      <a class="hide-sm" href="#features">功能</a>
+      <a class="hide-sm" href="#deploy">導入方式</a>
+      <a class="demo-link" href="demo.html">開啟 Demo →</a>
+    </nav>
   </div>
+</header>
+
+<main id="top">
+
+  <!-- 1. Hero -->
+  <section class="hero">
+    <div class="wrap">
+      <span class="eyebrow">多路直播同步監看</span>
+      <h1>同時盯十六路直播，只用一個瀏覽器分頁</h1>
+      <p class="lead">
+        多路直播並排播放，音訊只走你指定的那一路，其餘自動靜音。
+        版面可即時在 2×2、3×3、4×4 之間切換，重要的那一路拖到左上角。
+        不必安裝軟體、不必買分割器，開一個網頁就能開始。
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="live-wall.html">看監看牆 Demo →</a>
+        <a class="btn btn-ghost" href="live-wall-xhs.html">看直播廣場 Demo →</a>
+      </div>
+      <p class="fineprint">兩個 Demo 皆為可實際操作的頁面，內容來源為 YouTube 官方嵌入播放器。</p>
+
+      <div class="hero-visual" aria-hidden="true">
+        <div class="mock-grid">
+          <div class="mock-cell live"><span>國際新聞</span></div>
+          <div class="mock-cell"><span>財經快訊</span></div>
+          <div class="mock-cell"><span>賽事實況</span></div>
+          <div class="mock-cell"><span>氣象連線</span></div>
+          <div class="mock-cell"><span>地方頻道</span></div>
+          <div class="mock-cell"><span>官方發布</span></div>
+          <div class="mock-cell"><span>活動主舞台</span></div>
+          <div class="mock-cell"><span>備援訊號</span></div>
+        </div>
+        <p class="mock-caption">示意版面：紅框那一路是目前唯一有聲音的，點喇叭即可換人講話。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 問題陳述 -->
+  <section id="problem">
+    <div class="wrap">
+      <span class="eyebrow">為什麼需要</span>
+      <h2 class="sec">要同時看很多路直播，現在都怎麼看？</h2>
+      <p class="sec-lead">大多數單位不是沒解法，是解法太貴、太亂，或事後才發現漏掉了。</p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h3>一、開十個分頁</h3>
+          <p>十路直播十個分頁，聲音全部疊在一起，光是找「剛剛是哪一個在講話」就要一個一個點過去。想換版面就是重新排視窗。</p>
+        </div>
+        <div class="card">
+          <h3>二、堆硬體監看牆</h3>
+          <p>一面牆要好幾台螢幕加訊號分割器，先花一筆錢，之後要換一路內容還得爬到機櫃後面接線。臨時加一路幾乎不可能。</p>
+        </div>
+        <div class="card">
+          <h3>三、事後回看錄影</h3>
+          <p>當下沒盯到，只能靠截圖和事後回放補。突發狀況、對手動態、現場異常，錯過的那個當下追不回來。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 核心能力 -->
+  <section id="features">
+    <div class="wrap">
+      <span class="eyebrow">核心能力</span>
+      <h2 class="sec">為「同時盯多路」這件事本身設計的細節</h2>
+      <p class="sec-lead">以下每一項都已實作在 Demo 頁面上，現在就能點開驗證。</p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h3>🔊 音訊獨佔</h3>
+          <p>同一時間只有一路有聲音。點另一路的喇叭，前一路自動靜音 — 不必手動一格一格關掉，也不會有兩個人同時在講話。</p>
+        </div>
+        <div class="card">
+          <h3>▦ 版面即時切換</h3>
+          <p>2×2、3×3、4×4 一鍵切換，不必重新載入。任何一格都能單獨放到全螢幕，看清楚再切回整面牆。</p>
+        </div>
+        <div class="card">
+          <h3>✥ 拖曳排序</h3>
+          <p>抓著格子直接拖，把最需要盯的那一路挪到左上角。排好的順序會記住，下次開啟還是同一個位置。</p>
+        </div>
+        <div class="card">
+          <h3>⏸ 自動省資源</h3>
+          <p>捲出畫面外的直播自動暫停，回到視野內再恢復。避免十幾個播放器同時全速運轉把機器拖垮。</p>
+        </div>
+        <div class="card">
+          <h3>⚠ 黑畫面自診</h3>
+          <p>某一路不能播時，那一格會直接寫出原因和處理方式，而不是留一格黑的讓人猜。值班的人不用回頭問工程。</p>
+        </div>
+        <div class="card">
+          <h3>⇄ 設定可搬家</h3>
+          <p>整面牆的設定可匯出成一個 JSON 檔，換一台電腦匯入就完整還原。要複製同樣的版面到第二個場地，就是一個檔案的事。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 使用情境 -->
+  <section id="usecases">
+    <div class="wrap">
+      <span class="eyebrow">使用情境</span>
+      <h2 class="sec">三種已經有人在用這個方式解決的問題</h2>
+      <p class="sec-lead">同一套系統，換個版面和內容清單就能對應不同場合。</p>
+
+      <div class="grid grid-3">
+        <div class="usecase">
+          <p class="who">門市 · 健身房 · 餐飲 · 辦公大廳 · 候診區</p>
+          <h3>場域數位看板</h3>
+          <ul>
+            <li>一面螢幕同時放新聞、財經、賽事，等待中的顧客有東西看</li>
+            <li>全部靜音播放，不干擾現場音樂與談話</li>
+            <li>一台便宜的電腦接電視就能跑，不需額外播放盒</li>
+          </ul>
+          <p class="rec">建議版面：<strong>監看牆</strong></p>
+        </div>
+
+        <div class="usecase">
+          <p class="who">公關 · 媒體 · 品牌行銷 · 活動主控</p>
+          <h3>戰情室與內容監看</h3>
+          <ul>
+            <li>危機事件時同時盯多家媒體，第一時間看到誰先報</li>
+            <li>開票夜、賽事夜、發表會，一面牆看完所有頻道口徑</li>
+            <li>取代多台螢幕加分割器的硬體配置，臨時加一路只要貼網址</li>
+          </ul>
+          <p class="rec">建議版面：<strong>監看牆</strong></p>
+        </div>
+
+        <div class="usecase">
+          <p class="who">電競 · 演唱會 · 產業展會 · 大型遶境</p>
+          <h3>活動多視角觀看頁</h3>
+          <ul>
+            <li>一頁放齊所有機位，觀眾自己選要看哪一個角度</li>
+            <li>想聽哪一路就點哪一路，其他自動靜音</li>
+            <li>活動當天設定好即可，做完就交付，不需長期維運</li>
+          </ul>
+          <p class="rec">建議版面：<strong>直播廣場</strong></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 兩種版面 -->
+  <section id="layouts">
+    <div class="wrap">
+      <span class="eyebrow">兩種版面</span>
+      <h2 class="sec">同一套功能，兩種說故事的方式</h2>
+      <p class="sec-lead">兩個版面都是完整可操作的頁面，直接點開就能試。</p>
+
+      <div class="grid grid-2">
+        <a class="card layout-card" href="live-wall-xhs.html">
+          <span class="tag">小紅書風格</span>
+          <h3>直播廣場</h3>
+          <p>淺色卡片瀑布流、分類分頁與搜尋，點卡片展開大畫面。捲出畫面的卡片自動暫停。</p>
+          <p class="fits"><b>適合誰：</b>面向觀眾與顧客的瀏覽體驗，活動觀看頁、對外聚合站。</p>
+          <p class="go">開啟直播廣場 →</p>
+        </a>
+
+        <a class="card layout-card" href="live-wall.html">
+          <span class="tag neutral">監看牆</span>
+          <h3>多路直播牆</h3>
+          <p>深色格狀版面，2×2 / 3×3 / 4×4 切換，單格放大、拖曳排序與音訊獨佔。</p>
+          <p class="fits"><b>適合誰：</b>需要長時間盯著多路訊號的值班人員、戰情室、場域看板。</p>
+          <p class="go">開啟監看牆 →</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 導入方式 -->
+  <section id="deploy">
+    <div class="wrap">
+      <span class="eyebrow">導入方式</span>
+      <h2 class="sec">從直接拿去用，到完整客製</h2>
+      <p class="sec-lead">依照場域數量與維運需求，有三種不同深度的做法。</p>
+
+      <div class="grid grid-3">
+        <div class="card">
+          <h3>直接使用</h3>
+          <p>純靜態網頁，丟到任何一個空間或起一個本機伺服器就能跑，沒有資料庫也沒有建置流程。貼上直播網址即可開始，設定存在瀏覽器裡。</p>
+        </div>
+        <div class="card">
+          <h3>白牌客製</h3>
+          <p>換成自家品牌與配色、鎖定預設的直播清單、拿掉現場人員不該碰的操作按鈕，做成一開機就是正確畫面的專用版本。</p>
+        </div>
+        <div class="card">
+          <h3>專案導入</h3>
+          <p>多個場域要從同一個後台派送版面、直播來源需要自動更新不必人工換網址、想知道哪一台裝置哪一路黑掉了 — 這些屬於客製開發範圍，可另行討論。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. 適用邊界 -->
+  <section id="notes">
+    <div class="wrap">
+      <span class="eyebrow">誠實說明</span>
+      <h2 class="sec">導入前請先確認</h2>
+      <p class="sec-lead">與其導入後才發現，不如先講清楚目前這個版本的適用範圍。</p>
+
+      <div class="notes">
+        <ol>
+          <li><b>內容來源為 YouTube 官方嵌入播放器。</b>小紅書與抖音的直播採簽章網址加來源鎖定，沒有公開的嵌入方式，無法放進第三方網頁 — 這是平台端的限制，不是本系統可以繞過的。</li>
+          <li><b>需要每一場直播各自的 <code>watch?v=</code> 網址。</b>頻道網址（<code>/@帳號</code>、<code>/channel/UC…</code>）目前不適用，YouTube 已不支援「自動播出該頻道當前直播」的嵌入方式。直播結束換新場次時需更新網址；長期無人看管的場域建議搭配專案導入的自動更新機制。</li>
+          <li><b>需透過 http(s) 提供服務。</b>直接雙擊 HTML 檔開啟會被 YouTube 拒絕播放（錯誤碼 153）。線上版本或本機伺服器都沒有這個問題。</li>
+          <li><b>Demo 頁面上的觀看數與讚數為示意數字</b>，依影片編號產生的固定假資料，非真實數據，正式導入時會移除或改接真實來源。</li>
+          <li><b>商用前請一併確認 YouTube 服務條款</b>對嵌入播放器的規範，特別是關於在播放器周圍呈現商業內容的部分。</li>
+          <li><b>Demo 中的品牌名稱為中性佔位</b>，非任何實際企業。</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. 結尾 CTA -->
+  <section id="cta">
+    <div class="wrap">
+      <div class="final">
+        <h2>與其看說明，不如直接點開試</h2>
+        <p>兩個 Demo 現在就是可操作的完整頁面，貼上一個直播網址就能加進去。</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="live-wall.html">開啟監看牆 →</a>
+          <a class="btn btn-ghost" href="live-wall-xhs.html">開啟直播廣場 →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <strong>LiveHub</strong> — 多路直播展示原型。單一自足 HTML 檔，無建置流程、無外部函式庫。<br>
+    頁面上的觀看數與讚數為示意數字，非真實數據。品牌名稱為中性佔位，非任何實際企業。
+    小紅書與抖音的直播無法嵌入第三方網頁，此處內容來源均為 YouTube。<br>
+    授權 MIT · <a href="demo.html">Demo 導覽頁</a>
+  </div>
+</footer>
+
 </body>
 </html>

@@ -16,6 +16,7 @@ echo   LiveHub is starting...
 echo.
 echo   Main page : http://localhost:%PORT%/%PAGE%
 echo   Dark wall : http://localhost:%PORT%/live-wall.html
+echo   Product   : http://localhost:%PORT%/index.html
 echo.
 echo   The browser will open automatically.
 echo   To stop: close this window, or press Ctrl+C.

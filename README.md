@@ -8,6 +8,8 @@ https://rock903400-byte.github.io/livehub-demo/
 
 | 頁面 | 版面 |
 |---|---|
+| [`index.html`](index.html) | **產品說明頁** — 對外行銷落地頁，站台首頁。使用情境、核心能力、導入方式與適用邊界 |
+| [`demo.html`](demo.html) | **Demo 導覽頁** — 兩種版面的入口 |
 | [`live-wall-xhs.html`](live-wall-xhs.html) | **直播廣場** — 小紅書風格。淺色卡片瀑布流、分類分頁與搜尋，點卡片展開大畫面 |
 | [`live-wall.html`](live-wall.html) | **多路直播牆** — 深色監看牆。2×2 / 3×3 / 4×4 切換、單格全螢幕、拖曳排序 |
 
