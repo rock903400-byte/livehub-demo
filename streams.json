@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-07-23T09:37:37.196Z",
+  "updatedAt": "2026-07-23T14:05:30.293Z",
   "note": "由 scripts/refresh-streams.mjs 自動產生，請勿手改。頻道清單在該腳本的 SOURCES。",
   "streams": [
     {
       "handle": "SkyNews",
-      "ref": "8GBuV2PW3L0",
+      "ref": "YDvsBbKfLPA",
       "host": "Sky News",
       "title": "24 小時英國與國際即時新聞",
       "tag": "新聞",
@@ -40,7 +40,7 @@
     },
     {
       "handle": "NBCNews",
-      "ref": "iFzZXUeewbQ",
+      "ref": "szV8dODoYx8",
       "host": "NBC News",
       "title": "美國每日焦點新聞直播",
       "tag": "新聞",
