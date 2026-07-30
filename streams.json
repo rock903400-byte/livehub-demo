@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-30T02:32:48.346Z",
+  "updatedAt": "2026-07-30T14:07:07.529Z",
   "note": "由 scripts/refresh-streams.mjs 自動產生，請勿手改。頻道清單在該腳本的 SOURCES。",
   "streams": [
     {
@@ -40,7 +40,7 @@
     },
     {
       "handle": "NBCNews",
-      "ref": "dbjg2Khkveg",
+      "ref": "DpN09uGgGlU",
       "host": "NBC News",
       "title": "美國每日焦點新聞直播",
       "tag": "新聞",
@@ -121,7 +121,7 @@
     },
     {
       "handle": "CafeMusicBGMChannel",
-      "ref": "o4ZIahPSzIE",
+      "ref": "ZFW3ZOFW9lM",
       "host": "Cafe Music BGM channel",
       "title": "咖啡廳爵士背景音樂",
       "tag": "音樂",
