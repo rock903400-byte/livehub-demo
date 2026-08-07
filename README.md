@@ -1,5 +1,8 @@
 # LiveHub — 多路直播展示原型
 
+[![Refresh Streams](https://github.com/rock903400-byte/livehub-demo/actions/workflows/refresh-streams.yml/badge.svg)](https://github.com/rock903400-byte/livehub-demo/actions/workflows/refresh-streams.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 同時播放多路 YouTube 直播的網頁原型，提案／客戶展示用。單一自足 HTML 檔，無建置流程、無外部函式庫。
 
 ## 線上版本
