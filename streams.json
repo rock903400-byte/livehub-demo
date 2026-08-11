@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-11T13:09:29.347Z",
+  "updatedAt": "2026-08-11T19:04:02.243Z",
   "note": "由 scripts/refresh-streams.mjs 自動產生，請勿手改。頻道清單在該腳本的 SOURCES。",
   "streams": [
     {
@@ -121,7 +121,7 @@
     },
     {
       "handle": "CafeMusicBGMChannel",
-      "ref": "dr7yVB64Gjg",
+      "ref": "TTvbZCknU24",
       "host": "Cafe Music BGM channel",
       "title": "咖啡廳爵士背景音樂",
       "tag": "音樂",
