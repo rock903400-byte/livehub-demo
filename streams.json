@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-12T03:40:36.079Z",
+  "updatedAt": "2026-09-13T20:28:25.725Z",
   "note": "由 scripts/refresh-streams.mjs 自動產生，請勿手改。頻道清單在該腳本的 SOURCES。",
   "streams": [
     {
@@ -63,7 +63,7 @@
       "title": "國際視角的深度新聞",
       "tag": "新聞",
       "safe": false,
-      "stale": false
+      "stale": true
     },
     {
       "handle": "NASA",
