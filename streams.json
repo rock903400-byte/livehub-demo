@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-16T03:52:49.764Z",
+  "updatedAt": "2026-09-16T11:02:04.124Z",
   "note": "由 scripts/refresh-streams.mjs 自動產生，請勿手改。頻道清單在該腳本的 SOURCES。",
   "streams": [
     {
@@ -45,7 +45,7 @@
       "title": "美國每日焦點新聞直播",
       "tag": "新聞",
       "safe": false,
-      "stale": false
+      "stale": true
     },
     {
       "handle": "ABCNews",
