@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-10-21T11:21:23.854Z",
+  "updatedAt": "2026-10-21T16:48:18.641Z",
   "note": "由 scripts/refresh-streams.mjs 自動產生，請勿手改。頻道清單在該腳本的 SOURCES。",
   "streams": [
     {
       "handle": "SkyNews",
-      "ref": "xDWQ3LkccY8",
+      "ref": "umLWFz4izTM",
       "host": "Sky News",
       "title": "24 小時英國與國際即時新聞",
       "tag": "新聞",
