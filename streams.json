@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-22T11:21:06.109Z",
+  "updatedAt": "2026-10-22T16:48:42.168Z",
   "note": "由 scripts/refresh-streams.mjs 自動產生，請勿手改。頻道清單在該腳本的 SOURCES。",
   "streams": [
     {
@@ -67,7 +67,7 @@
     },
     {
       "handle": "NASA",
-      "ref": "awQzjn72bI0",
+      "ref": "ROboUHfPUrU",
       "host": "NASA",
       "title": "太空任務與地球實況畫面",
       "tag": "知識",
