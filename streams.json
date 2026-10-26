@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-25T10:56:19.342Z",
+  "updatedAt": "2026-10-26T12:27:21.621Z",
   "note": "由 scripts/refresh-streams.mjs 自動產生，請勿手改。頻道清單在該腳本的 SOURCES。",
   "streams": [
     {
@@ -40,7 +40,7 @@
     },
     {
       "handle": "NBCNews",
-      "ref": "aF9neWULq64",
+      "ref": "8XMyQlUX8Ks",
       "host": "NBC News",
       "title": "美國每日焦點新聞直播",
       "tag": "新聞",
