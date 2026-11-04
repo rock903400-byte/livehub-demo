@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-03T22:59:02.957Z",
+  "updatedAt": "2026-11-04T23:20:47.440Z",
   "note": "由 scripts/refresh-streams.mjs 自動產生，請勿手改。頻道清單在該腳本的 SOURCES。",
   "streams": [
     {
@@ -40,7 +40,7 @@
     },
     {
       "handle": "NBCNews",
-      "ref": "B9i_01yEgt0",
+      "ref": "I0wBL9pgX3c",
       "host": "NBC News",
       "title": "美國每日焦點新聞直播",
       "tag": "新聞",
@@ -58,7 +58,7 @@
     },
     {
       "handle": "trtworld",
-      "ref": "adUSssjOCLY",
+      "ref": "JV5w1MhzcfQ",
       "host": "TRT World",
       "title": "國際視角的深度新聞",
       "tag": "新聞",
